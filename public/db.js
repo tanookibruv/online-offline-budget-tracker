@@ -16,9 +16,42 @@ request.onsuccess = ({ target }) => {
     }
 };
 
+request.onerror = ({target}) => {
+    console.log(`Error!, ${target.errorCode}`);
+}
+
 function checkDatabase() {
     const transaction = db.transaction(["budgets"], readWrite);
     const store = transaction.createObjectStore("budgets");
+    const getAll = store.getAll();
 
-    store.add(record)
+    getAll.onsuccess = function () {
+        if (getAll.results.length > 0) {
+            fetch("/api/transaction/bulk", {
+                method: "POST",
+                body: JSON.stringify(getAll.result),
+                headers: {
+                    Accept:"application/json, text/plain, */*",
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                return response.json();
+            })
+            .then(() => {
+                const transaction = db.transaction(["budgets"], "readWrite");
+                const store = transaction.createObjectStore("budgets");
+                store.clear()
+            });
+        }
+    };
 }
+
+function saveRecord(record) {
+    const transaction = db.transaction(["budgets"], "readWrite");
+    const store = transaction.createObjectStore("budgets");
+
+    store.add(record);
+}
+
+window.addEventListener("online", checkDatabase);
