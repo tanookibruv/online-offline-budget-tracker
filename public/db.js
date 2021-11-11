@@ -1,17 +1,23 @@
-let db;
+const indexedDB =
+    window.indexedDB ||
+    window.shimIndexeDB||
+    window.msIndexeDB ||
+    window.webkitIndexeDB ||
+    window.mozIndexeDB;
 
+let db;
 const request = indexedDB.open("budget", 1);
 
 request.onupgradeneeded = ({ target }) => {
     let db = target.result;
-    db.createObjectStore ("budgets", {autoIncrement: true})
+    db.createObjectStore ("pending", {autoIncrement: true})
 };
 
 request.onsuccess = ({ target }) => {
     console.log("Success");
     db = target.result;
 
-    if (navigator.online) {
+    if (navigator.onLine) {
         checkDatabase();
     }
 };
@@ -21,8 +27,8 @@ request.onerror = ({target}) => {
 }
 
 function checkDatabase() {
-    const transaction = db.transaction(["budgets"], readWrite);
-    const store = transaction.createObjectStore("budgets");
+    const transaction = db.transaction(["pending"], "readWrite");
+    const store = transaction.createObjectStore("pending");
     const getAll = store.getAll();
 
     getAll.onsuccess = function () {
@@ -39,8 +45,8 @@ function checkDatabase() {
                 return response.json();
             })
             .then(() => {
-                const transaction = db.transaction(["budgets"], "readWrite");
-                const store = transaction.createObjectStore("budgets");
+                const transaction = db.transaction(["pending"], "readWrite");
+                const store = transaction.createObjectStore("pending");
                 store.clear()
             });
         }
@@ -48,8 +54,8 @@ function checkDatabase() {
 }
 
 function saveRecord(record) {
-    const transaction = db.transaction(["budgets"], "readWrite");
-    const store = transaction.createObjectStore("budgets");
+    const transaction = db.transaction(["pending"], "readWrite");
+    const store = transaction.createObjectStore("pending");
 
     store.add(record);
 }
